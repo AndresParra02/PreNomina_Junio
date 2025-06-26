@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Consulta de Pre-Nómina</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+  <h2>Consulta de Pre-Nómina</h2>
+  <label for="cedula">Ingrese su cédula:</label>
+  <input type="text" id="cedula">
+  <button onclick="consultarPrenomina()">Consultar</button>
+
+  <div id="resultado" style="margin-top:20px; font-family: Arial;"></div>
+
+  <script>
+    let datosPrenomina = [];
+
+    // Carga el CSV al cargar la página
+    fetch('prenomina.csv')
+      .then(response => response.text())
+      .then(csvText => {
+        Papa.parse(csvText, {
+          header: true,
+          skipEmptyLines: true,
+          complete: function(results) {
+            datosPrenomina = results.data;
+          }
+        });
+      });
+
+    function consultarPrenomina() {
+      const cedulaInput = document.getElementById("cedula").value.trim();
+      const persona = datosPrenomina.find(p => p.CEDULA === cedulaInput);
+
+      const divResultado = document.getElementById("resultado");
+      if (persona) {
+        divResultado.innerHTML = `
+          <h3>Resultados para: ${persona["APELLIDOS Y NOMBRES"]}</h3>
+          <ul>
+            <li><strong>Cédula:</strong> ${persona["CEDULA"]}</li>
+            <li><strong>Cargo:</strong> ${persona["CARGO"]}</li>
+            <li><strong>Campaña:</strong> ${persona["CAMPAÑA"]}</li>
+            <li><strong>Días laborados:</strong> ${persona["DIAS LAB"]}</li>
+            <li><strong>Salario:</strong> $${formatoMoneda(persona["SALARIO"])}</li>
+            <li><strong>Prima:</strong> $${formatoMoneda(persona["PRIMA"])}</li>
+            <li><strong>Comisiones:</strong> $${formatoMoneda(persona["COMISIONES"])}</li>
+            <li><strong>Auxilio Transporte:</strong> $${formatoMoneda(persona["AUX_TRANSPO"])}</li>
+          </ul>
+        `;
+      } else {
+        divResultado.innerHTML = `<p style="color: red;">No se encontró información para la cédula ingresada.</p>`;
+      }
+    }
+
+    function formatoMoneda(valor) {
+      return parseInt(valor).toLocaleString('es-CO');
+    }
+  </script>
+</body>
+</html>
