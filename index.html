@@ -4,6 +4,30 @@
   <meta charset="UTF-8">
   <title>Consulta de Pre-Nómina</title>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    label, input, button {
+      font-size: 16px;
+    }
+    input {
+      padding: 5px;
+      width: 200px;
+      margin-right: 10px;
+    }
+    button {
+      padding: 6px 12px;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      margin-bottom: 5px;
+    }
+  </style>
 </head>
 <body>
   <h2>Consulta de Pre-Nómina</h2>
@@ -11,12 +35,12 @@
   <input type="text" id="cedula">
   <button onclick="consultarPrenomina()">Consultar</button>
 
-  <div id="resultado" style="margin-top:20px; font-family: Arial;"></div>
+  <div id="resultado" style="margin-top:20px;"></div>
 
   <script>
     let datosPrenomina = [];
 
-    // Carga el CSV al cargar la página
+    // Cargar el archivo CSV
     fetch('prenomina.csv')
       .then(response => response.text())
       .then(csvText => {
@@ -35,6 +59,11 @@
 
       const divResultado = document.getElementById("resultado");
       if (persona) {
+        const total = ['SALARIO', 'PRIMA', 'COMISIONES', 'AUX_TRANSPO'].reduce((acc, campo) => {
+          const limpio = persona[campo]?.toString().replace(/[^0-9]/g, '');
+          return acc + parseInt(limpio || 0);
+        }, 0);
+
         divResultado.innerHTML = `
           <h3>Resultados para: ${persona["APELLIDOS Y NOMBRES"]}</h3>
           <ul>
@@ -42,10 +71,11 @@
             <li><strong>Cargo:</strong> ${persona["CARGO"]}</li>
             <li><strong>Campaña:</strong> ${persona["CAMPAÑA"]}</li>
             <li><strong>Días laborados:</strong> ${persona["DIAS LAB"]}</li>
-            <li><strong>Salario:</strong> $${formatoMoneda(persona["SALARIO"])}</li>
-            <li><strong>Prima:</strong> $${formatoMoneda(persona["PRIMA"])}</li>
-            <li><strong>Comisiones:</strong> $${formatoMoneda(persona["COMISIONES"])}</li>
-            <li><strong>Auxilio Transporte:</strong> $${formatoMoneda(persona["AUX_TRANSPO"])}</li>
+            <li><strong>Salario:</strong> ${formatoMoneda(persona["SALARIO"])}</li>
+            <li><strong>Prima:</strong> ${formatoMoneda(persona["PRIMA"])}</li>
+            <li><strong>Comisiones:</strong> ${formatoMoneda(persona["COMISIONES"])}</li>
+            <li><strong>Aux. Transporte:</strong> ${formatoMoneda(persona["AUX_TRANSPO"])}</li>
+            <li><strong>Total devengado:</strong> ${formatoMoneda(total)}</li>
           </ul>
         `;
       } else {
@@ -54,7 +84,13 @@
     }
 
     function formatoMoneda(valor) {
-      return parseInt(valor).toLocaleString('es-CO');
+      if (!valor) return "$ 0";
+      const limpio = valor.toString().replace(/[^0-9]/g, '');
+      return parseInt(limpio).toLocaleString('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0
+      });
     }
   </script>
 </body>
